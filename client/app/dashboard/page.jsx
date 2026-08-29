@@ -1,14 +1,16 @@
-"use client"
-import React from 'react'
-import {useCurrentUser} from '@/hooks/use-auth'
+"use client";
 
-const DashboardPage = () => {
-  const {data: user, isLoading} = useCurrentUser()
+import { RequireAuth } from "@/components/providers/require-auth";
+import { AppShell } from "@/components/layout/app-shell";
 
-  console.log('user', user, isLoading)
+export default function DashboardPage() {
   return (
-    <div>DashboardPage</div>
-  )
+    <RequireAuth>
+      <AppShell hideHeader>
+        <div className="flex min-h-svh items-center justify-center">
+          <h1 className="text-2xl font-bold">Welcome to DevPilot</h1>
+        </div>
+      </AppShell>
+    </RequireAuth>
+  );
 }
-
-export default DashboardPage
