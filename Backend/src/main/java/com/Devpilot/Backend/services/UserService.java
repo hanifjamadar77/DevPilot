@@ -48,7 +48,7 @@ public class UserService {
         return tokenEncryptor.decrypt(user.getAccessToken());
     }
 
-    private static Long toLong(Object value) {
+    public static Long toLong(Object value) {
         if(value instanceof Number number) {
             return number.longValue();
         }
