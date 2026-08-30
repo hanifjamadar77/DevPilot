@@ -41,16 +41,6 @@ const LoginContent = () => {
     window.location.href = getGithubLoginUrl();
   };
 
-  useEffect(() => {
-    if (!isLoading && user) {
-      router.replace(next.startsWith("/") ? next : "/dashboard");
-    }
-    }, [user, isLoading, next, router]);
-
-  if (isLoading || user) {
-    return <LoginLoading />;
-  }
-
 
 return (
   <>
