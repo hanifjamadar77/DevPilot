@@ -5,6 +5,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
+import com.Devpilot.Backend.exceptions.UnauthorizedException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -26,27 +28,34 @@ public class GithubApiClient {
     public List<Map<String, Object>> listUserRepos(String accessToken) {
         List<Map<String, Object>> all = new ArrayList<>();
         int page = 1;
-        while (page <= 10) {
-            final int currentPage = page;
-            List<Map<String, Object>> pageRepos = client(accessToken)
-                    .get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/user/repos")
-                            .queryParam("affiliation", "owner, collaborator, organizatior, organization_member")
-                            .queryParam("sort", "updated")
-                            .queryParam("per_page", 100)
-                            .queryParam("page", currentPage)
-                            .build())
-                            .retrieve()
-                    .body(LIST_MAP);
-            if(pageRepos == null || pageRepos.isEmpty()) {
-                 break;
+        try {
+            while (page <= 10) {
+                final int currentPage = page;
+                List<Map<String, Object>> pageRepos = client(accessToken)
+                        .get()
+                        .uri(uriBuilder -> uriBuilder
+                                .path("/user/repos")
+                                .queryParam("affiliation", "owner,collaborator,organization_member")
+                                .queryParam("sort", "updated")
+                                .queryParam("per_page", 100)
+                                .queryParam("page", currentPage)
+                                .build())
+                        .retrieve()
+                        .body(LIST_MAP);
+                if (pageRepos == null || pageRepos.isEmpty()) {
+                    break;
+                }
+                all.addAll(pageRepos);
+                if (pageRepos.size() < 100) {
+                    break;
+                }
+                page++;
             }
-            all.addAll(pageRepos);
-            if (pageRepos.size() < 100) {
-                break;
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().value() == 401) {
+                throw new UnauthorizedException("GitHub authentication expired or was revoked");
             }
-            page++;
+            throw exception;
         }
         return all;
     }
@@ -54,9 +63,9 @@ public class GithubApiClient {
     public Map<String, Object> getRepoTree(String accessToken, String owner, String repo, String branch) {
         return client(accessToken)
                 .get()
-                .uri( "/repos/{owner}/{repo}/git/trees/{branch}?recursive=1", owner, repo, branch)
+                .uri("/repos/{owner}/{repo}/git/trees/{branch}?recursive=1", owner, repo, branch)
                 .retrieve()
-                .body (MAP) ;
+                .body(MAP);
     }
 
     public String getFileContent(String accessToken, String owner, String repo, String path) {
@@ -73,18 +82,17 @@ public class GithubApiClient {
         if (content == null) {
             return null;
         }
-        if ("base64" .equals(String.valueOf(encoding))) {
+        if ("base64".equals(String.valueOf(encoding))) {
             String raw = String.valueOf(content).replaceAll("\\s", "");
             return new String(Base64.getDecoder().decode(raw), StandardCharsets.UTF_8);
         }
         return String.valueOf(content);
     }
 
-
-    private RestClient client(String accessToken){
+    private RestClient client(String accessToken) {
         return restClientBuilder
                 .baseUrl(API_BASE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer" + accessToken)
+                .defaultHeaders(headers -> headers.setBearerAuth(accessToken))
                 .defaultHeader(HttpHeaders.ACCEPT, "application/vnd.github+json")
                 .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
                 .defaultHeader(HttpHeaders.USER_AGENT, "DevPilot")
