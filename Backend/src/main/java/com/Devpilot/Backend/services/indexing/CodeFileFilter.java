@@ -3,6 +3,9 @@ package com.Devpilot.Backend.services.indexing;
 import java.util.Locale;
 import java.util.Set;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class CodeFileFilter {
     private static final Set<String> SKIP_DIR_PARTS = Set.of(
             "node_modules",

@@ -6,13 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.stereotype.Service;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-
 import com.Devpilot.Backend.entity.IndexStatus;
 import com.Devpilot.Backend.entity.Repository;
 import com.Devpilot.Backend.exceptions.BadRequestException;
@@ -22,6 +15,14 @@ import com.Devpilot.Backend.services.UserService;
 import com.Devpilot.Backend.services.ai.RagSettings;
 import com.Devpilot.Backend.services.github.GitHubRateLimiter;
 import com.Devpilot.Backend.services.github.GithubApiClient;
+import org.springframework.stereotype.Service;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,15 +1,19 @@
 package com.Devpilot.Backend.services.indexing;
 
-import com.Devpilot.Backend.services.ai.RagSettings;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.transformer.splitter.TokenTextSplitter;
-import org.springframework.beans.factory.annotation.Value;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import org.springframework.ai.document.Document;
+import org.springframework.ai.transformer.splitter.TokenTextSplitter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.Devpilot.Backend.services.ai.RagSettings;
+
+
+@Component
 public class CodeChunker {
     private final TokenTextSplitter splitter;
     private final CodeFileFilter fileFilter;
