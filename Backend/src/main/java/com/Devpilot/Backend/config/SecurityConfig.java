@@ -1,6 +1,8 @@
 package com.Devpilot.Backend.config;
 
 import com.Devpilot.Backend.security.GithubOAuth2UserService;
+import com.Devpilot.Backend.security.JwtTokenProvider;
+import com.Devpilot.Backend.security.AppUserPrincipal;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +29,7 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 public class SecurityConfig {
 
     private final GithubOAuth2UserService githubOAuth2UserService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -42,14 +45,20 @@ public class SecurityConfig {
                     jakarta.servlet.http.HttpServletRequest request,
                     jakarta.servlet.http.HttpServletResponse response,
                     Authentication authentication) throws java.io.IOException {
-                // Create a simple token from the principal
-                String token = java.util.UUID.randomUUID().toString();
-                request.getSession().setAttribute("_auth_token", token);
-                
-                // Redirect to frontend with token in URL
-                String redirectUrl = frontendUrl + "/auth/callback?token=" + 
-                    java.net.URLEncoder.encode(token, "UTF-8");
-                response.sendRedirect(redirectUrl);
+                try {
+                    // Extract user from authentication principal
+                    AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();
+                    
+                    // Generate JWT token
+                    String token = jwtTokenProvider.generateToken(principal.getUser());
+                    
+                    // Redirect to frontend with token in URL
+                    String redirectUrl = frontendUrl + "/auth/callback?token=" + 
+                        java.net.URLEncoder.encode(token, "UTF-8");
+                    response.sendRedirect(redirectUrl);
+                } catch (Exception e) {
+                    response.sendRedirect(frontendUrl + "/login?error=token_generation_failed");
+                }
             }
         };
 
@@ -68,7 +77,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionCreationPolicy(SessionCreationPolicy.NEVER)
                 )
 
                 .exceptionHandling(ex -> ex

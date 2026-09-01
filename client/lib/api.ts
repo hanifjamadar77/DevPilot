@@ -80,8 +80,6 @@ export function getGithubLoginUrl() {
   return `${getApiBaseUrl()}/oauth2/authorization/github`;
 }
 
-("Request failed");
-
 async function parseError(res: Response): Promise<string> {
   try {
     const data = await res.json();
@@ -95,16 +93,40 @@ export async function apiFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
+  // Get JWT token from localStorage
+  let token: string | null = null;
+  if (typeof window !== "undefined") {
+    token = localStorage.getItem("auth_token");
+  }
+
+  // Set up headers
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  // Merge init headers
+  if (init?.headers) {
+    const initHeaders = init.headers as Record<string, string>;
+    Object.assign(headers, initHeaders);
+  }
+
+  // Add JWT token if available
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
+    headers,
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      // Clear invalid token on 401
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("auth_token");
+      }
+    }
     throw new ApiError(res.status, await parseError(res));
   }
 
