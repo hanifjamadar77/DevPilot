@@ -35,11 +35,22 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         SimpleUrlAuthenticationSuccessHandler successHandler =
-                new SimpleUrlAuthenticationSuccessHandler();
-
-        successHandler.setDefaultTargetUrl(
-                frontendUrl + "/auth/callback"
-        );
+                new SimpleUrlAuthenticationSuccessHandler() {
+            @Override
+            public void onAuthenticationSuccess(
+                    jakarta.servlet.http.HttpServletRequest request,
+                    jakarta.servlet.http.HttpServletResponse response,
+                    Authentication authentication) throws java.io.IOException {
+                // Create a simple token from the principal
+                String token = java.util.UUID.randomUUID().toString();
+                request.getSession().setAttribute("_auth_token", token);
+                
+                // Redirect to frontend with token in URL
+                String redirectUrl = frontendUrl + "/auth/callback?token=" + 
+                    java.net.URLEncoder.encode(token, "UTF-8");
+                response.sendRedirect(redirectUrl);
+            }
+        };
 
 
         SimpleUrlAuthenticationFailureHandler failureHandler =
@@ -70,6 +81,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login-url",
                                 "/api/auth/debug",
+                                "/api/auth/check-session",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/error"

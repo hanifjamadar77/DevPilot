@@ -28,7 +28,7 @@ public class AuthController {
     public ResponseEntity<UserResponse> me() {
         AppUserPrincipal principal = currentUser.require();
         User user = principal.getUser();
-        return ResponseEntity. ok(new UserResponse(
+        return ResponseEntity.ok(new UserResponse(
                 user.getId(),
                 user.getGithubId(),
                 user.getGithubUsername(),
@@ -36,5 +36,19 @@ public class AuthController {
                 user.getAvatarUrl()));
     }
 
-
+    @GetMapping("/check-session")
+    public ResponseEntity<Map<String, Object>> checkSession(jakarta.servlet.http.HttpServletRequest request) {
+        try {
+            AppUserPrincipal principal = currentUser.require();
+            return ResponseEntity.ok(Map.of(
+                "authenticated", true,
+                "user", principal.getUser().getGithubUsername()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of(
+                "authenticated", false,
+                "error", e.getMessage()
+            ));
+        }
+    }
 }
