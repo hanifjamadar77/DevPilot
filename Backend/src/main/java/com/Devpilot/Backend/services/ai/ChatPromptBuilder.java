@@ -3,7 +3,7 @@ package com.Devpilot.Backend.services.ai;
 import org.springframework.stereotype.Component;
 
 /**
- * Builds the prompts sent to OpenAI.
+ * Builds the prompts sent to the Gemini model.
  *
  * <p>We use two messages:
  * <ul>
