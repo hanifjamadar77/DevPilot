@@ -19,10 +19,14 @@ public class CorsConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                List<String> origins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
+
+                if (origins.isEmpty()) {
+                        throw new IllegalStateException("APP_CORS_ALLOWED_ORIGINS must contain at least one frontend origin");
+                }
 
         config.setAllowedOrigins(origins);
 
