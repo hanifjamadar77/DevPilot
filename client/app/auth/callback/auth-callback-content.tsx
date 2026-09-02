@@ -1,47 +1,62 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
-import { useCurrentUser } from "@/hooks/use-auth";
 import { Spinner } from "@/components/ui/spinner";
 
 export function AuthCallbackContent() {
   const router = useRouter();
   const params = useSearchParams();
-  const token = params.get("token");
-  const error = params.get("error");
-  const [tokenStored, setTokenStored] = useState(false);
-  const { data: user, isLoading, isFetched } = useCurrentUser({ enabled: tokenStored });
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
-    // Handle error from OAuth
+    // Prevent double execution
+    if (hasProcessed.current) return;
+    hasProcessed.current = true;
+
+    const token = params.get("token");
+    const error = params.get("error");
+
+    console.log("[AuthCallback] Processing callback", { 
+      hasToken: !!token, 
+      hasError: !!error,
+      tokenLength: token?.length 
+    });
+
+    // Handle error
     if (error) {
-      console.error("OAuth error:", error);
+      console.error("[AuthCallback] OAuth error:", error);
       router.push(`/login?error=${error}`);
       return;
     }
 
-    // Extract and store token from URL
-    if (token && !tokenStored) {
-      console.log("Token received, storing in localStorage");
-      localStorage.setItem("auth_token", token);
-      // Enable user fetch after storing token
-      setTokenStored(true);
+    // Extract and store token
+    if (token) {
+      console.log("[AuthCallback] Storing token in localStorage");
+      try {
+        localStorage.setItem("auth_token", token);
+        const stored = localStorage.getItem("auth_token");
+        console.log("[AuthCallback] Token stored successfully", { 
+          stored: !!stored,
+          matches: stored === token 
+        });
+      } catch (e) {
+        console.error("[AuthCallback] Failed to store token:", e);
+        router.push("/login?error=storage_failed");
+        return;
+      }
+
+      // Redirect to dashboard - new page load will pick up token from localStorage
+      console.log("[AuthCallback] Redirecting to dashboard");
+      router.push("/dashboard");
       return;
     }
 
-    // After token is stored and user data is fetched
-    if (tokenStored && isFetched) {
-      if (user) {
-        console.log("User authenticated, redirecting to dashboard");
-        router.push("/dashboard");
-      } else {
-        console.log("User fetch failed, redirecting to login");
-        router.push("/login?error=unauthorized");
-      }
-    }
-  }, [token, error, tokenStored, isFetched, user, router]);
+    // No token found
+    console.error("[AuthCallback] No token or error in URL");
+    router.push("/login?error=no_token");
+  }, [params, router]);
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-3">
