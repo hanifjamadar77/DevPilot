@@ -18,7 +18,7 @@ export function setAuthCookie(authed: boolean) {
   document.cookie = `${AUTH_COOKIE}=; path=/; max-age=0; SameSite=Lax; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
-export function useCurrentUser() {
+export function useCurrentUser(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.auth.me(),
     queryFn: async () => {
@@ -31,6 +31,7 @@ export function useCurrentUser() {
         throw error;
       }
     },
+    enabled: options?.enabled !== false,
   });
 }
 

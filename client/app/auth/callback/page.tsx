@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { useCurrentUser } from "@/hooks/use-auth";
 import { Spinner } from "@/components/ui/spinner";
@@ -11,30 +11,34 @@ export default function AuthCallbackPage() {
     const params = useSearchParams();
     const token = params.get("token");
     const error = params.get("error");
-    const { data: user, isLoading, isFetched } = useCurrentUser();
+    const [tokenStored, setTokenStored] = useState(false);
+    const { data: user, isLoading, isFetched } = useCurrentUser({ enabled: tokenStored });
 
     useEffect(() => {
+        // Handle error from OAuth
         if (error) {
             router.replace(`/login?error=${error}`);
             return;
         }
 
+        // Extract and store token from URL
         if (token) {
-            // Store token in localStorage
             localStorage.setItem("auth_token", token);
-            // Trigger re-fetch of user data with token
-            window.location.href = "/dashboard";
+            setTokenStored(true);
+            // Clear token from URL for security
+            router.replace("/auth/callback");
             return;
         }
 
-        if (!isFetched || isLoading) return;
-
-        if (user) {
-            router.replace("/dashboard");
-            return;
+        // If no token and already checked, redirect
+        if (tokenStored && isFetched) {
+            if (user) {
+                router.replace("/dashboard");
+            } else {
+                router.replace("/login?error=unauthorized");
+            }
         }
-        router.replace("/login?error=session");
-    }, [user, isLoading, isFetched, error, token, router]);
+    }, [token, error, tokenStored, isFetched, user, router]);
 
     return (
         <div className="flex min-h-svh flex-col items-center justify-center gap-3">

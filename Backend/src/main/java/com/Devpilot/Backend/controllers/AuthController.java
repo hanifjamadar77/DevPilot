@@ -92,4 +92,28 @@ public class AuthController {
             ));
         }
     }
+
+    @GetMapping("/validate-token")
+    public ResponseEntity<Map<String, Object>> validateToken(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        try {
+            if (authHeader == null) {
+                return ResponseEntity.ok(Map.of("valid", false, "error", "No Authorization header"));
+            }
+            if (!authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.ok(Map.of("valid", false, "error", "Invalid header format"));
+            }
+            String token = authHeader.substring(7);
+            UUID userId = jwtTokenProvider.validateAndGetUserId(token);
+            return ResponseEntity.ok(Map.of(
+                "valid", true,
+                "userId", userId.toString()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of(
+                "valid", false,
+                "error", e.getClass().getSimpleName() + ": " + e.getMessage()
+            ));
+        }
+    }
 }
