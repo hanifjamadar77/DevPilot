@@ -1,5 +1,3 @@
-"use client";
-
 import { Suspense } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { AuthCallbackContent } from "./auth-callback-content";

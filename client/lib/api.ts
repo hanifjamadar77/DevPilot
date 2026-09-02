@@ -97,6 +97,11 @@ export async function apiFetch<T>(
   let token: string | null = null;
   if (typeof window !== "undefined") {
     token = localStorage.getItem("auth_token");
+    if (token) {
+      console.log(`[apiFetch] Found auth token in localStorage, sending to ${path}`);
+    } else {
+      console.log(`[apiFetch] No auth token found in localStorage for ${path}`);
+    }
   }
 
   // Set up headers
@@ -113,6 +118,7 @@ export async function apiFetch<T>(
   // Add JWT token if available
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+    console.log(`[apiFetch] Added Authorization header to ${path}`);
   }
 
   const res = await fetch(`${getApiBaseUrl()}${path}`, {
@@ -123,6 +129,7 @@ export async function apiFetch<T>(
   if (!res.ok) {
     if (res.status === 401) {
       // Clear invalid token on 401
+      console.error(`[apiFetch] Got 401 on ${path}, clearing token`);
       if (typeof window !== "undefined") {
         localStorage.removeItem("auth_token");
       }

@@ -17,25 +17,28 @@ export function AuthCallbackContent() {
   useEffect(() => {
     // Handle error from OAuth
     if (error) {
-      router.replace(`/login?error=${error}`);
+      console.error("OAuth error:", error);
+      router.push(`/login?error=${error}`);
       return;
     }
 
     // Extract and store token from URL
-    if (token) {
+    if (token && !tokenStored) {
+      console.log("Token received, storing in localStorage");
       localStorage.setItem("auth_token", token);
+      // Enable user fetch after storing token
       setTokenStored(true);
-      // Clear token from URL for security
-      router.replace("/auth/callback");
       return;
     }
 
-    // If no token and already checked, redirect
+    // After token is stored and user data is fetched
     if (tokenStored && isFetched) {
       if (user) {
-        router.replace("/dashboard");
+        console.log("User authenticated, redirecting to dashboard");
+        router.push("/dashboard");
       } else {
-        router.replace("/login?error=unauthorized");
+        console.log("User fetch failed, redirecting to login");
+        router.push("/login?error=unauthorized");
       }
     }
   }, [token, error, tokenStored, isFetched, user, router]);
